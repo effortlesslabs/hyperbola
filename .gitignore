@@ -1,0 +1,38 @@
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs
+*.log
+logs/*.log
+
+# Next.js
+.next/
+out/
+build/
+
+# Workers
+dist/
+wrangler.toml
+.env
+.env.*
+
+# Express
+*.pid
+*.seed
+*.pid.lock
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.swns

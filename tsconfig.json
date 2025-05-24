@@ -1,0 +1,14 @@
+{
+  // This configuration is used for local development and type checking.
+  "extends": "./tsconfig.base.json",
+  "include": ["scripts", "src", "test"],
+  "exclude": ["src/_dist"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "paths": {
+      "hyperbola": ["src/index.ts"],
+      "hyperbola/internal": ["src/internal/index.ts"]
+    }
+  }
+}
