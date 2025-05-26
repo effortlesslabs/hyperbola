@@ -3,14 +3,6 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { getAuthUrl, exchangeCodeForToken, getProviderConfig } from './oauth';
 
-type Env = {
-	GOOGLE_CLIENT_ID: string;
-	GOOGLE_CLIENT_SECRET: string;
-	GITHUB_CLIENT_ID: string;
-	GITHUB_CLIENT_SECRET: string;
-	OAUTH_REDIRECT_URI: string;
-};
-
 const app = new Hono<{ Bindings: Env }>();
 
 // Generic auth redirect handler
