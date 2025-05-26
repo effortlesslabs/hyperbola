@@ -1,18 +1,72 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { Hono } from 'hono';
+import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
+import { getAuthUrl, exchangeCodeForToken, getProviderConfig } from './oauth';
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+type Env = {
+	GOOGLE_CLIENT_ID: string;
+	GOOGLE_CLIENT_SECRET: string;
+	GITHUB_CLIENT_ID: string;
+	GITHUB_CLIENT_SECRET: string;
+	OAUTH_REDIRECT_URI: string;
+};
+
+const app = new Hono<{ Bindings: Env }>();
+
+// Generic auth redirect handler
+app.get(
+	'/auth/:provider',
+	zValidator(
+		'param',
+		z.object({
+			provider: z.enum(['google', 'github']),
+		})
+	),
+	(c) => {
+		const { provider } = c.req.valid('param');
+		const state = crypto.randomUUID();
+		const config = getProviderConfig(provider, c.env);
+
+		return c.redirect(getAuthUrl(config, state));
+	}
+);
+
+// Generic callback handler
+app.get(
+	'/auth/:provider/callback',
+	zValidator(
+		'param',
+		z.object({
+			provider: z.enum(['google', 'github']),
+		})
+	),
+	zValidator(
+		'query',
+		z.object({
+			code: z.string().min(1),
+		})
+	),
+	async (c) => {
+		const { provider } = c.req.valid('param');
+		const { code } = c.req.valid('query');
+
+		const config = getProviderConfig(provider, c.env);
+
+		const tokenData = await exchangeCodeForToken(config, code);
+		return c.json(tokenData);
+	}
+);
+
+app.get('/', (c) => {
+	return c.text('Hello from Auth Service!');
+});
+
+app.get('/health', (c) => {
+	return c.json({ status: 'ok' });
+});
+
+app.get('/version', (c) => {
+	return c.json({ version: '1.0.0' });
+});
+
+export default app;
