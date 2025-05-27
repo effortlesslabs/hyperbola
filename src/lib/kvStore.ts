@@ -1,9 +1,4 @@
-interface KVNamespace {
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-  get(key: string): Promise<string | null>;
-  delete(key: string): Promise<void>;
-  list(options?: { prefix?: string }): Promise<{ keys: Array<{ name: string }> }>;
-}
+import type { KVNamespace } from "@cloudflare/workers-types";
 
 class KVStore {
   private kv: KVNamespace;
@@ -27,13 +22,13 @@ class KVStore {
   }
 
   async list(prefix?: string): Promise<string[]> {
-    const list = await this.kv.list({ prefix });
+    const list = await this.kv.list({ prefix: prefix ?? null });
     return list.keys.map((k) => k.name);
   }
 
   async getAll<T>(prefix?: string): Promise<Record<string, T>> {
     const result: Record<string, T> = {};
-    const keys = await this.kv.list({ prefix });
+    const keys = await this.kv.list({ prefix: prefix ?? null });
     for (const { name } of keys.keys) {
       const value = await this.get<T>(name);
       if (value !== null) result[name] = value;

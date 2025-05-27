@@ -5,10 +5,10 @@
   "exclude": ["src/_dist"],
   "compilerOptions": {
     "baseUrl": ".",
-    "jsx": "react-jsx"
-    // "paths": {
-    //   "hyperbola": ["src/index.ts"],
-    //   "hyperbola/internal": ["src/internal/index.ts"],
-    // }
+    "jsx": "react-jsx",
+    "paths": {
+      "hyperbola": ["src/index.ts"]
+      // "hyperbola/internal": ["src/internal/index.ts"]
+    }
   }
 }
