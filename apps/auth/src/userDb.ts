@@ -1,11 +1,11 @@
 export interface User {
   id: string;
   provider: string;
-  provider_id: string;
+  providerId: string;
   email: string | null;
   name: string | null;
-  avatar_url: string | null;
-  created_at?: string;
+  avatarUrl: string | null;
+  createdAt?: string;
 }
 
 export class UserDb {
@@ -15,34 +15,34 @@ export class UserDb {
     this.db = db;
   }
 
-  // Upsert user by provider/provider_id
+  // Upsert user by provider/providerId
   async upsertUser(user: {
     provider: string;
-    provider_id: string;
+    providerId: string;
     email: string | null;
     name: string | null;
-    avatar_url: string | null;
+    avatarUrl: string | null;
   }): Promise<User> {
     await this.db
       .prepare(
-        `INSERT INTO users (provider, provider_id, email, name, avatar_url, created_at)
+        `INSERT INTO users (provider, providerId, email, name, avatarUrl, createdAt)
          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-         ON CONFLICT(provider, provider_id) DO UPDATE SET
-           email=excluded.email, name=excluded.name, avatar_url=excluded.avatar_url`
+         ON CONFLICT(provider, providerId) DO UPDATE SET
+           email=excluded.email, name=excluded.name, avatarUrl=excluded.avatarUrl`
       )
-      .bind(user.provider, user.provider_id, user.email, user.name, user.avatar_url)
+      .bind(user.provider, user.providerId, user.email, user.name, user.avatarUrl)
       .run();
 
-    return await this.getUserByProviderId(user.provider, user.provider_id);
+    return await this.getUserByProviderId(user.provider, user.providerId);
   }
 
-  // Get user by provider/provider_id
-  async getUserByProviderId(provider: string, provider_id: string): Promise<User> {
+  // Get user by provider/providerId
+  async getUserByProviderId(provider: string, providerId: string): Promise<User> {
     const row = await this.db
       .prepare(
-        "SELECT id, provider, provider_id, email, name, avatar_url, created_at FROM users WHERE provider = ? AND provider_id = ?"
+        "SELECT id, provider, providerId, email, name, avatarUrl, createdAt FROM users WHERE provider = ? AND providerId = ?"
       )
-      .bind(provider, provider_id)
+      .bind(provider, providerId)
       .first();
     if (!row) throw new Error("User not found");
     return row as User;
@@ -52,7 +52,7 @@ export class UserDb {
   async getUserById(id: string): Promise<User> {
     const row = await this.db
       .prepare(
-        "SELECT id, provider, provider_id, email, name, avatar_url, created_at FROM users WHERE id = ?"
+        "SELECT id, provider, providerId, email, name, avatarUrl, createdAt FROM users WHERE id = ?"
       )
       .bind(id)
       .first();

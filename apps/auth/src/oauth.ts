@@ -96,16 +96,16 @@ export async function handleOAuthCallback(c: any) {
   const providerId = String(userProfile.id);
   const email = userProfile.email ?? null;
   const name = userProfile.name ?? null;
-  const avatarUrl = userProfile.avatar_url ?? null;
+  const avatarUrl = userProfile.avatarUrl ?? userProfile.avatar_url ?? null;
 
   const userDb = new UserDb(db);
   // Upsert user and get user row
   const userRow = await userDb.upsertUser({
     provider,
-    provider_id: providerId,
+    providerId,
     email,
     name,
-    avatar_url: avatarUrl,
+    avatarUrl,
   });
 
   // Generate JWT
@@ -141,10 +141,10 @@ export async function handleOAuthCallback(c: any) {
     user: {
       id: userRow.id,
       provider,
-      provider_id: providerId,
+      providerId: providerId,
       email,
       name,
-      avatar_url: avatarUrl,
+      avatarUrl: avatarUrl,
     },
   });
 }
