@@ -5,7 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "pnpm clean && tsc --project ./tsconfig.build.json"
+    "build": "pnpm clean && tsc --project ./tsconfig.build.json",
+    "clean": "rm -rf dist .turbo && echo Cleaned",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format .",
+    "test": "echo \"No tests in root package\" && exit 0"
   },
   "keywords": [],
   "author": "",

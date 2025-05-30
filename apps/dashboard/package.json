@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "biome format .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"No tests configured for dashboard\" && exit 0",
+    "clean": "rm -rf .next dist .turbo && echo Cleaned"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",

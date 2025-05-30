@@ -101,62 +101,46 @@ export async function handleOAuthCallback(c: any) {
   const userDb = new UserDb(db);
   // Upsert user and get user row
   const userRow = await userDb.upsertUser({
-    id: null,
+    provider,
+    providerId,
     email,
     name,
     avatarUrl,
-    providers: [
-      {
-        provider,
-        providerId,
-        email,
-      },
-    ],
   });
 
-  // // Generate JWT
-  // const { signJwtHS256 } = await import("./lib/jwt");
-  // const jwtSecret = c.env.JWT_SECRET;
-  // const jwt = await signJwtHS256(
-  //   {
-  //     sub: String(userRow.id),
-  //     provider,
-  //     provider_id: providerId,
-  //     email,
-  //     name,
-  //     avatar_url: avatarUrl,
-  //   },
-  //   jwtSecret,
-  //   60 * 60 * 24 // 24h
-  // );
+  // Generate JWT
+  const { signJwtHS256 } = await import("./lib/jwt");
+  const jwtSecret = c.env.JWT_SECRET;
+  const jwt = await signJwtHS256(
+    {
+      sub: String(userRow.id),
+      provider,
+      provider_id: providerId,
+      email,
+      name,
+      avatar_url: avatarUrl,
+    },
+    jwtSecret,
+    60 * 60 * 24 // 24h
+  );
 
-  // // Generate refresh token (random UUID)
-  // const refreshToken = crypto.randomUUID();
-  // // Store refresh token in D1 (with expiry, e.g., 30d)
-  // await db
-  //   .prepare(
-  //     `INSERT INTO refresh_tokens (user_id, token, expires_at)
-  //    VALUES (?, ?, datetime('now', '+30 days'))`
-  //   )
-  //   .bind(userRow.id, refreshToken)
-  //   .run();
+  // Generate refresh token (random UUID)
+  const refreshToken = crypto.randomUUID();
 
-  // return c.json({
-  //   jwt,
-  //   refresh_token: refreshToken,
-  //   user: {
-  //     id: userRow.id,
-  //     provider,
-  //     providerId: providerId,
-  //     email,
-  //     name,
-  //     avatarUrl: avatarUrl,
-  //   },
-  // });
+  // Store refresh token in D1 (with expiry, e.g., 30d)
+  const { SQL_INSERT_REFRESH_TOKEN } = await import("./lib/sql");
+  await db.prepare(SQL_INSERT_REFRESH_TOKEN).bind(userRow.id, refreshToken).run();
 
   return c.json({
-    message: "OAuth callback handled successfully",
-    userProfile,
-    tokenData,
+    jwt,
+    refresh_token: refreshToken,
+    user: {
+      id: userRow.id,
+      provider,
+      providerId: providerId,
+      email,
+      name,
+      avatarUrl: avatarUrl,
+    },
   });
 }

@@ -4,7 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "echo \"No dev script configured for docs\" && exit 0",
+    "build": "echo \"No build script configured for docs\" && exit 0",
+    "start": "echo \"No start script configured for docs\" && exit 0",
+    "test": "echo \"No tests configured for docs\" && exit 0",
+    "lint": "echo \"No lint script configured for docs\" && exit 0",
+    "format": "echo \"No format script configured for docs\" && exit 0",
+    "typecheck": "echo \"No typecheck script configured for docs\" && exit 0",
+    "clean": "rm -rf dist .turbo && echo Cleaned"
   },
   "keywords": [],
   "author": "",

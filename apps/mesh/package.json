@@ -7,7 +7,11 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"lint": "biome lint .",
+		"format": "biome format .",
+		"typecheck": "tsc --noEmit",
+		"clean": "rm -rf dist .turbo && echo Cleaned"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",

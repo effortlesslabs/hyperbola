@@ -33,16 +33,30 @@ export const refreshTokenController = async (c: Context) => {
 
   // Issue new JWT
   const { signJwtHS256 } = await import("../lib/jwt");
+  const provider = user.providers?.[0]?.provider ?? null;
+  const providerId = user.providers?.[0]?.providerId ?? null;
   const jwt = await signJwtHS256(
     {
       sub: String(user.id),
-      provider: user.providers?.[0]?.provider ?? null,
-      providerId: user.providers?.[0]?.providerId ?? null,
-      id: user.id,
+      provider,
+      provider_id: providerId,
+      email: user.email ?? null,
+      name: user.name ?? null,
+      avatar_url: user.avatarUrl ?? null,
     },
     jwtSecret,
     60 * 60 * 24 // 24h
   );
 
-  return c.json({ jwt });
+  return c.json({
+    jwt,
+    user: {
+      id: user.id,
+      provider,
+      providerId,
+      email: user.email ?? null,
+      name: user.name ?? null,
+      avatarUrl: user.avatarUrl ?? null,
+    },
+  });
 };

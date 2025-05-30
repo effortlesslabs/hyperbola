@@ -9,6 +9,7 @@ import {
   SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER,
   SQL_INSERT_PROVIDER,
   SQL_UPDATE_PROVIDER_ID,
+  SQL_GET_PROVIDER_BY_EMAIL,
 } from "./lib/sql";
 
 export interface ProviderAccount {
@@ -20,6 +21,7 @@ export interface ProviderAccount {
 export interface User {
   id: string;
   name: string | null;
+  email: string | null;
   avatarUrl: string | null;
   createdAt?: string;
   providers: ProviderAccount[];
@@ -69,24 +71,18 @@ export class UserDb {
   }
 
   // Upsert user and link provider
-  /**
-   * Upsert a user and all associated providers according to the new schema.
-   * Accepts a User object (id can be null for new users).
-   */
   async upsertUser(user: {
-    id: string | null;
+    provider: string;
+    providerId: string;
     email: string | null;
     name: string | null;
     avatarUrl: string | null;
-    createdAt?: string;
-    providers: ProviderAccount[];
   }): Promise<User> {
-    // Find user by email
-    const userRow = await this.db.prepare(SQL_GET_USER_BY_EMAIL).bind(user.email).first();
+    const providerRow = await this.db.prepare(SQL_GET_PROVIDER_BY_EMAIL).bind(user.email).first();
 
     let userId: string;
-    if (userRow) {
-      userId = userRow.id;
+    if (providerRow) {
+      userId = providerRow.userId;
       // Update user info
       await this.db.prepare(SQL_UPDATE_USER_INFO).bind(user.name, user.avatarUrl, userId).run();
     } else {
@@ -98,28 +94,20 @@ export class UserDb {
       userId = newUser.id;
     }
 
-    // Upsert all providers
-    for (const provider of user.providers) {
-      const existingProvider = await this.db
-        .prepare(SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER)
-        .bind(userId, provider.provider)
-        .first();
+    // Link provider if not already linked
+    const existingProvider = await this.db
+      .prepare(SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER)
+      .bind(userId, user.provider)
+      .first();
 
-      if (!existingProvider) {
-        // Insert provider with email if possible
-        await this.db
-          .prepare(
-            "INSERT INTO userProviders (userId, provider, providerId, email) VALUES (?, ?, ?, ?)"
-          )
-          .bind(userId, provider.provider, provider.providerId, provider.email)
-          .run();
-      } else {
-        // Update providerId and email if changed
-        await this.db
-          .prepare("UPDATE userProviders SET providerId = ?, email = ? WHERE id = ?")
-          .bind(provider.providerId, provider.email, existingProvider.id)
-          .run();
-      }
+    if (!existingProvider) {
+      await this.db.prepare(SQL_INSERT_PROVIDER).bind(userId, user.provider, user.providerId).run();
+    } else {
+      // Update providerId if changed
+      await this.db
+        .prepare(SQL_UPDATE_PROVIDER_ID)
+        .bind(user.providerId, existingProvider.id)
+        .run();
     }
 
     return await this.getUserById(userId);
