@@ -1,11 +1,28 @@
-export interface User {
-  id: string;
+import {
+  SQL_GET_USER_BY_EMAIL,
+  SQL_GET_PROVIDERS_BY_USER_ID,
+  SQL_GET_USER_ID_BY_PROVIDER,
+  SQL_GET_USER_BY_ID,
+  SQL_GET_USER_ID_BY_EMAIL,
+  SQL_UPDATE_USER_INFO,
+  SQL_INSERT_USER,
+  SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER,
+  SQL_INSERT_PROVIDER,
+  SQL_UPDATE_PROVIDER_ID,
+} from "./lib/sql";
+
+export interface ProviderAccount {
   provider: string;
   providerId: string;
   email: string | null;
+}
+
+export interface User {
+  id: string;
   name: string | null;
   avatarUrl: string | null;
   createdAt?: string;
+  providers: ProviderAccount[];
 }
 
 export class UserDb {
@@ -15,48 +32,96 @@ export class UserDb {
     this.db = db;
   }
 
-  // Upsert user by provider/providerId
-  async upsertUser(user: {
-    provider: string;
-    providerId: string;
-    email: string | null;
-    name: string | null;
-    avatarUrl: string | null;
-  }): Promise<User> {
-    await this.db
-      .prepare(
-        `INSERT INTO users (provider, providerId, email, name, avatarUrl, createdAt)
-         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-         ON CONFLICT(provider, providerId) DO UPDATE SET
-           email=excluded.email, name=excluded.name, avatarUrl=excluded.avatarUrl`
-      )
-      .bind(user.provider, user.providerId, user.email, user.name, user.avatarUrl)
-      .run();
+  // Get user by email, including all linked providers
+  async getUserByEmail(email: string): Promise<User | null> {
+    const userRow = await this.db.prepare(SQL_GET_USER_BY_EMAIL).bind(email).first();
+    if (!userRow) return null;
 
-    return await this.getUserByProviderId(user.provider, user.providerId);
+    const providers = await this.db.prepare(SQL_GET_PROVIDERS_BY_USER_ID).bind(userRow.id).all();
+
+    return {
+      ...userRow,
+      providers: providers.results as ProviderAccount[],
+    } as User;
   }
 
   // Get user by provider/providerId
   async getUserByProviderId(provider: string, providerId: string): Promise<User> {
-    const row = await this.db
-      .prepare(
-        "SELECT id, provider, providerId, email, name, avatarUrl, createdAt FROM users WHERE provider = ? AND providerId = ?"
-      )
+    const providerRow = await this.db
+      .prepare(SQL_GET_USER_ID_BY_PROVIDER)
       .bind(provider, providerId)
       .first();
-    if (!row) throw new Error("User not found");
-    return row as User;
+    if (!providerRow) throw new Error("User not found");
+    return await this.getUserById(providerRow.userId);
   }
 
-  // Get user by id
+  // Get user by id, including all linked providers
   async getUserById(id: string): Promise<User> {
-    const row = await this.db
-      .prepare(
-        "SELECT id, provider, providerId, email, name, avatarUrl, createdAt FROM users WHERE id = ?"
-      )
-      .bind(id)
-      .first();
-    if (!row) throw new Error("User not found");
-    return row as User;
+    const userRow = await this.db.prepare(SQL_GET_USER_BY_ID).bind(id).first();
+    if (!userRow) throw new Error("User not found");
+
+    const providers = await this.db.prepare(SQL_GET_PROVIDERS_BY_USER_ID).bind(id).all();
+
+    return {
+      ...userRow,
+      providers: providers.results as ProviderAccount[],
+    } as User;
+  }
+
+  // Upsert user and link provider
+  /**
+   * Upsert a user and all associated providers according to the new schema.
+   * Accepts a User object (id can be null for new users).
+   */
+  async upsertUser(user: {
+    id: string | null;
+    email: string | null;
+    name: string | null;
+    avatarUrl: string | null;
+    createdAt?: string;
+    providers: ProviderAccount[];
+  }): Promise<User> {
+    // Find user by email
+    const userRow = await this.db.prepare(SQL_GET_USER_BY_EMAIL).bind(user.email).first();
+
+    let userId: string;
+    if (userRow) {
+      userId = userRow.id;
+      // Update user info
+      await this.db.prepare(SQL_UPDATE_USER_INFO).bind(user.name, user.avatarUrl, userId).run();
+    } else {
+      // Insert new user
+      await this.db.prepare(SQL_INSERT_USER).bind(user.email, user.name, user.avatarUrl).run();
+      // Get new user id
+      const newUser = await this.db.prepare(SQL_GET_USER_ID_BY_EMAIL).bind(user.email).first();
+      if (!newUser) throw new Error("User not found after insert");
+      userId = newUser.id;
+    }
+
+    // Upsert all providers
+    for (const provider of user.providers) {
+      const existingProvider = await this.db
+        .prepare(SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER)
+        .bind(userId, provider.provider)
+        .first();
+
+      if (!existingProvider) {
+        // Insert provider with email if possible
+        await this.db
+          .prepare(
+            "INSERT INTO userProviders (userId, provider, providerId, email) VALUES (?, ?, ?, ?)"
+          )
+          .bind(userId, provider.provider, provider.providerId, provider.email)
+          .run();
+      } else {
+        // Update providerId and email if changed
+        await this.db
+          .prepare("UPDATE userProviders SET providerId = ?, email = ? WHERE id = ?")
+          .bind(provider.providerId, provider.email, existingProvider.id)
+          .run();
+      }
+    }
+
+    return await this.getUserById(userId);
   }
 }
