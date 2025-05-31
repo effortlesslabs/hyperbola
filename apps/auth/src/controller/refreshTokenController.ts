@@ -53,7 +53,7 @@ export const refreshTokenController = async (c: Context) => {
   );
 
   return c.json({
-    jwt,
+    token: jwt,
     user: {
       id: user.id,
       provider,

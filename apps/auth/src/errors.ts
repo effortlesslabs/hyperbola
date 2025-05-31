@@ -19,7 +19,7 @@ export const errorMessages: Record<ErrorCode, string> = {
   [ErrorCode.TokenExpired]: "Your session has expired. Please log in again.",
   [ErrorCode.InvalidOrExpiredToken]: "Invalid or expired token.",
   [ErrorCode.UserNotFound]: "User not found.",
-  [ErrorCode.MissingRefreshToken]: "Missing refresh_token.",
+  [ErrorCode.MissingRefreshToken]: "Missing refreshToken.",
   [ErrorCode.InvalidRefreshToken]: "Invalid refresh token.",
   [ErrorCode.RefreshTokenExpired]: "Refresh token expired.",
   [ErrorCode.NoLinkedProvider]: "No linked provider found for user.",

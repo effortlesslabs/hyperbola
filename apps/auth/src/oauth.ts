@@ -133,7 +133,7 @@ export async function handleOAuthCallback(c: any) {
   await db.prepare(SQL_INSERT_REFRESH_TOKEN).bind(userRow.id, refreshToken).run();
 
   return c.json({
-    jwt,
+    token: jwt,
     refreshToken: refreshToken,
     user: {
       id: userRow.id,
