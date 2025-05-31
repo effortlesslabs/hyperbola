@@ -1,0 +1,15 @@
+{
+  "name": "hyperbola",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./_dist/index.js",
+  "types": "./_dist/index.d.ts",
+  "typings": "./_dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -16,7 +16,10 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.6.2",
-  "dependencies": {
-    "@cloudflare/workers-types": "^4.20250525.0"
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@cloudflare/workers-types": "^4.20250531.0",
+    "@qdrant/js-client-rest": "^1.14.1",
+    "typescript": "^5.3.3"
   }
 }

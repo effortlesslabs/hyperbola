@@ -1,6 +1,6 @@
 import type { KVNamespace } from "@cloudflare/workers-types";
 
-class KVStore {
+export class KVStore {
   private kv: KVNamespace;
 
   constructor(kvBinding: KVNamespace) {
@@ -36,5 +36,3 @@ class KVStore {
     return result;
   }
 }
-
-export default KVStore;

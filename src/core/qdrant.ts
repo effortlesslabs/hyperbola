@@ -5,7 +5,7 @@ export interface QdrantBaseInterface {
   apiKey: string;
 }
 
-abstract class QdrantBase {
+export abstract class QdrantBase {
   protected client: QdrantClient;
 
   constructor(parameters: QdrantBaseInterface) {
@@ -28,5 +28,3 @@ abstract class QdrantBase {
     return collectionExists;
   }
 }
-
-export default QdrantBase;

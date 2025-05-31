@@ -16,6 +16,7 @@ build/
 
 # Workers
 dist/
+_dist/
 wrangler.toml
 .env
 .env.*
@@ -36,3 +37,6 @@ Thumbs.db
 *.swo
 *.swn
 *.swns
+
+# Ignore TypeScript build info files
+**/tsconfig.build.tsbuildinfo
