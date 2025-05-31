@@ -11,7 +11,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </p>
       </div>
       <div className="grid gap-6">
-        <Button variant="outline" className="w-full">
+        <Button
+          variant="outline"
+          className="w-full"
+          type="button"
+          onClick={() => {
+            window.location.href = "/api/auth/google";
+          }}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>Google Logo</title>
             <path
@@ -33,7 +40,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           </svg>
           Google
         </Button>
-        <Button variant="outline" className="w-full">
+        <Button
+          variant="outline"
+          className="w-full"
+          type="button"
+          onClick={() => {
+            window.location.href = "/api/auth/github";
+          }}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <title>GitHub Logo</title>
             <path

@@ -1,25 +1,26 @@
 import type { Context } from "hono";
 import type { User } from "../userDb";
 import { SQL_GET_REFRESH_TOKEN } from "../lib/sql";
+import { ErrorCode, errorResponse } from "../errors";
 
 export const refreshTokenController = async (c: Context) => {
   const { refreshToken } = await c.req.json().catch(() => ({}));
   if (!refreshToken) {
-    return c.json({ error: "Missing refresh_token" }, 400);
+    return errorResponse(c, ErrorCode.MissingRefreshToken, 400);
   }
   const db = c.env.DB;
   const jwtSecret = c.env.JWT_SECRET;
-  if (!jwtSecret) return c.json({ error: "Server misconfigured" }, 500);
+  if (!jwtSecret) return errorResponse(c, ErrorCode.ServerMisconfigured, 500);
 
   // Look up refresh token in DB
   const row = await db.prepare(SQL_GET_REFRESH_TOKEN).bind(refreshToken).first();
 
   if (!row) {
-    return c.json({ error: "Invalid refresh token" }, 401);
+    return errorResponse(c, ErrorCode.InvalidRefreshToken, 401);
   }
   // Check expiry
   if (row.expiresAt && new Date(row.expiresAt as string | number | Date) < new Date()) {
-    return c.json({ error: "Refresh token expired" }, 401);
+    return errorResponse(c, ErrorCode.RefreshTokenExpired, 401);
   }
 
   // Get user info
@@ -28,13 +29,13 @@ export const refreshTokenController = async (c: Context) => {
   try {
     user = await userDb.getUserById(row.userId as string);
   } catch {
-    return c.json({ error: "User not found" }, 404);
+    return errorResponse(c, ErrorCode.UserNotFound, 404);
   }
 
   // Issue new JWT
   const { signJwtHS256 } = await import("../lib/jwt");
   if (!user.providers || user.providers.length === 0) {
-    return c.json({ error: "No linked provider found for user" }, 400);
+    return errorResponse(c, ErrorCode.NoLinkedProvider, 400);
   }
   const provider = user.providers[0].provider;
   const providerId = user.providers[0].providerId;

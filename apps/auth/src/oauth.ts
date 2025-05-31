@@ -2,6 +2,7 @@ import { getGoogleConfig } from "./provider/google";
 import { getGithubConfig } from "./provider/github";
 
 import { UserDb } from "./userDb";
+import { ErrorCode, errorResponse } from "./errors";
 
 export type OAuthProviderConfig = {
   name: string;
@@ -88,7 +89,7 @@ export async function handleOAuthCallback(c: any) {
     const { getGithubUser } = await import("./provider/github");
     userProfile = await getGithubUser(tokenData.access_token);
   } else {
-    return c.json({ error: "Unsupported provider" }, 400);
+    return errorResponse(c, ErrorCode.UnsupportedProvider, 400);
   }
 
   // Upsert or fetch user in D1 using UserDb
