@@ -12,6 +12,8 @@ import { rootController } from "./controller/rootController";
 import { healthController } from "./controller/healthController";
 import { versionController } from "./controller/versionController";
 
+import { getCurrentUserController, getUserByIdController } from "./controller/userController";
+
 type Variables = {
   userId: string;
 };
@@ -28,6 +30,8 @@ app.get(
 );
 
 app.use("/user", authMiddleware);
+app.get("/user", getCurrentUserController);
+app.get("/user/:id", getUserByIdController);
 
 app.post("/auth/refresh", refreshTokenController);
 

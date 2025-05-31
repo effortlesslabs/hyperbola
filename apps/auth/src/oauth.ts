@@ -133,7 +133,7 @@ export async function handleOAuthCallback(c: any) {
 
   return c.json({
     jwt,
-    refresh_token: refreshToken,
+    refreshToken: refreshToken,
     user: {
       id: userRow.id,
       provider,

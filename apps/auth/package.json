@@ -11,12 +11,13 @@
     "lint": "biome lint .",
     "format": "biome format .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist .turbo && echo Cleaned"
+    "clean": "rm -rf dist .turbo && echo Cleaned",
+    "d1:migrate": "wrangler d1 execute auth_db --file=./src/lib/queries.sql"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.19",
     "typescript": "^5.5.2",
-    "vitest": "~3.0.7",
+    "vitest": "3.1.4",
     "wrangler": "^4.16.1"
   },
   "dependencies": {

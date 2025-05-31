@@ -8,8 +8,6 @@ import {
   SQL_INSERT_USER,
   SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER,
   SQL_INSERT_PROVIDER,
-  SQL_UPDATE_PROVIDER_ID,
-  SQL_GET_PROVIDER_BY_EMAIL,
 } from "./lib/sql";
 
 export interface ProviderAccount {
@@ -28,13 +26,12 @@ export interface User {
 }
 
 export class UserDb {
-  private db: any; // D1Database
+  private db: any; // Type it as D1Database if using types
 
   constructor(db: any) {
     this.db = db;
   }
 
-  // Get user by email, including all linked providers
   async getUserByEmail(email: string): Promise<User | null> {
     const userRow = await this.db.prepare(SQL_GET_USER_BY_EMAIL).bind(email).first();
     if (!userRow) return null;
@@ -44,20 +41,18 @@ export class UserDb {
     return {
       ...userRow,
       providers: providers.results as ProviderAccount[],
-    } as User;
+    };
   }
 
-  // Get user by provider/providerId
   async getUserByProviderId(provider: string, providerId: string): Promise<User> {
     const providerRow = await this.db
       .prepare(SQL_GET_USER_ID_BY_PROVIDER)
       .bind(provider, providerId)
       .first();
-    if (!providerRow) throw new Error("User not found");
+    if (!providerRow) throw new Error("User not found via provider");
     return await this.getUserById(providerRow.userId);
   }
 
-  // Get user by id, including all linked providers
   async getUserById(id: string): Promise<User> {
     const userRow = await this.db.prepare(SQL_GET_USER_BY_ID).bind(id).first();
     if (!userRow) throw new Error("User not found");
@@ -67,10 +62,12 @@ export class UserDb {
     return {
       ...userRow,
       providers: providers.results as ProviderAccount[],
-    } as User;
+    };
   }
 
-  // Upsert user and link provider
+  /**
+   * Main entry point for login: auto-link by email or create new user
+   */
   async upsertUser(user: {
     provider: string;
     providerId: string;
@@ -78,38 +75,73 @@ export class UserDb {
     name: string | null;
     avatarUrl: string | null;
   }): Promise<User> {
-    const providerRow = await this.db.prepare(SQL_GET_PROVIDER_BY_EMAIL).bind(user.email).first();
+    let userId: string | null = null;
 
-    let userId: string;
-    if (providerRow) {
-      userId = providerRow.userId;
-      // Update user info
-      await this.db.prepare(SQL_UPDATE_USER_INFO).bind(user.name, user.avatarUrl, userId).run();
-    } else {
-      // Insert new user
-      await this.db.prepare(SQL_INSERT_USER).bind(user.email, user.name, user.avatarUrl).run();
-      // Get new user id
-      const newUser = await this.db.prepare(SQL_GET_USER_ID_BY_EMAIL).bind(user.email).first();
-      if (!newUser) throw new Error("User not found after insert");
-      userId = newUser.id;
+    // 1. Check if this provider is already linked
+    const existingProvider = await this.db
+      .prepare(SQL_GET_USER_ID_BY_PROVIDER)
+      .bind(user.provider, user.providerId)
+      .first();
+
+    if (existingProvider) {
+      userId = existingProvider.userId;
     }
 
-    // Link provider if not already linked
-    const existingProvider = await this.db
+    // 2. If not linked, check if user with same email exists
+    if (!userId && user.email) {
+      const existingUser = await this.db.prepare(SQL_GET_USER_ID_BY_EMAIL).bind(user.email).first();
+      if (existingUser) {
+        userId = existingUser.id;
+      }
+    }
+
+    // 3. Create new user if needed
+    if (!userId) {
+      userId = crypto.randomUUID();
+      await this.db
+        .prepare(SQL_INSERT_USER)
+        .bind(userId, user.email, user.name, user.avatarUrl)
+        .run();
+    } else {
+      // Update user's name/avatar on login
+      await this.db.prepare(SQL_UPDATE_USER_INFO).bind(user.name, user.avatarUrl, userId).run();
+    }
+
+    // 4. Ensure the provider is linked
+    const providerExists = await this.db
       .prepare(SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER)
       .bind(userId, user.provider)
       .first();
 
-    if (!existingProvider) {
-      await this.db.prepare(SQL_INSERT_PROVIDER).bind(userId, user.provider, user.providerId).run();
-    } else {
-      // Update providerId if changed
+    if (!providerExists) {
       await this.db
-        .prepare(SQL_UPDATE_PROVIDER_ID)
-        .bind(user.providerId, existingProvider.id)
+        .prepare(SQL_INSERT_PROVIDER)
+        .bind(crypto.randomUUID(), userId, user.provider, user.providerId, user.email)
         .run();
     }
 
     return await this.getUserById(userId);
+  }
+
+  /**
+   * Manually link a new OAuth provider to an existing user (user is logged in)
+   */
+  async linkProviderToUser(
+    userId: string,
+    provider: string,
+    providerId: string,
+    email: string
+  ): Promise<void> {
+    const alreadyLinked = await this.db
+      .prepare(SQL_GET_PROVIDER_BY_USER_ID_AND_PROVIDER)
+      .bind(userId, provider)
+      .first();
+
+    if (!alreadyLinked) {
+      await this.db
+        .prepare(SQL_INSERT_PROVIDER)
+        .bind(crypto.randomUUID, userId, provider, providerId, email)
+        .run();
+    }
   }
 }
