@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import type { User } from "../userDb";
+import type { User } from "../user-db";
 import { SQL_GET_REFRESH_TOKEN } from "../lib/sql";
 import { ErrorCode, errorResponse } from "../errors";
 
@@ -24,7 +24,7 @@ export const refreshTokenController = async (c: Context) => {
   }
 
   // Get user info
-  const userDb = new (await import("../userDb")).UserDb(db);
+  const userDb = new (await import("../user-db")).UserDb(db);
   let user: User;
   try {
     user = await userDb.getUserById(row.userId as string);

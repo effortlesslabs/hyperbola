@@ -1,7 +1,7 @@
 import { getGoogleConfig } from "./provider/google";
 import { getGithubConfig } from "./provider/github";
 
-import { UserDb } from "./userDb";
+import { UserDb } from "./user-db";
 import { ErrorCode, errorResponse } from "./errors";
 
 export type OAuthProviderConfig = {

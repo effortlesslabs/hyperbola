@@ -6,11 +6,12 @@
   "type": "module",
   "scripts": {
     "build": "pnpm clean && tsc --project ./tsconfig.build.json",
-    "clean": "rm -rf dist .turbo && echo Cleaned",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome lint .",
-    "format": "biome format .",
-    "test": "echo \"No tests in root package\" && exit 0"
+    "clean": "rm -rf src/_dist ./tsconfig.build.tsbuildinfo src/tsconfig.build.tsbuildinfo",
+    "dev:auth": "pnpm --filter auth dev",
+    "dev:dashboard": "pnpm --filter dashboard dev",
+    "dev:docs": "pnpm --filter docs dev",
+    "dev:mesh": "pnpm --filter mesh dev",
+    "dev": "pnpm --filter auth dev && pnpm --filter dashboard dev && pnpm --filter docs dev && pnpm --filter mesh dev"
   },
   "keywords": [],
   "author": "",

@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { UserDb } from "../userDb";
+import { UserDb } from "../user-db";
 import { ErrorCode, errorResponse } from "../errors";
 
 // GET /user - get current user (from authMiddleware)
